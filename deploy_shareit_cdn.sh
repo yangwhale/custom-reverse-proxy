@@ -26,7 +26,7 @@ export ZONE=asia-southeast1-a
 export INSTANCE_GROUP_ZONES=asia-southeast1-a,asia-southeast1-b,asia-southeast1-c
 
 # 1. Create base VM, with openresty installed
-gcloud beta compute --project=$PROJECT_ID instances create $BASE_INSTANCE_NAME --zone=$ZONE --machine-type=n1-standard-1 --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --tags=cdn-proxy,http-server,https-server --image=ubuntu-1804-bionic-v20200129a --image-project=ubuntu-os-cloud --boot-disk-size=10GB --boot-disk-type=pd-standard --boot-disk-device-name=$BASE_INSTANCE_NAME --reservation-affinity=any --metadata=startup-script=wget\ -O\ -\ https://raw.githubusercontent.com/eugeneyu/custom-reverse-proxy/master/openresty/gce_startup.sh\ \|\ bash
+gcloud beta compute --project=$PROJECT_ID instances create $BASE_INSTANCE_NAME --zone=$ZONE --machine-type=n1-standard-1 --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --tags=cdn-proxy,http-server,https-server --image=ubuntu-1804-bionic-v20200129a --image-project=ubuntu-os-cloud --boot-disk-size=10GB --boot-disk-type=pd-standard --boot-disk-device-name=$BASE_INSTANCE_NAME --reservation-affinity=any --metadata=startup-script=wget\ -O\ -\ https://raw.githubusercontent.com/yangwhale/custom-reverse-proxy/master/openresty/gce_startup.sh\ \|\ bash
 sleep 60
 	
 # 2. Create custom Image
@@ -34,7 +34,7 @@ gcloud compute images create $IMAGE_NAME --project=$PROJECT_ID --source-disk=$BA
 	
 # 3. Create instance template
 
-gcloud beta compute --project=$PROJECT_ID instance-templates create $INSTANCE_TEMPLATE_NAME --machine-type=n1-standard-4 --network-tier=PREMIUM --maintenance-policy=MIGRATE --tags=cdn-proxy,http-server,https-server --image=$IMAGE_NAME --image-project=$PROJECT_ID --boot-disk-size=100GB --boot-disk-type=pd-standard --boot-disk-device-name=$INSTANCE_TEMPLATE_NAME --reservation-affinity=any --metadata=startup-script="#! /bin/bash
+gcloud beta compute --project=$PROJECT_ID instance-templates create $INSTANCE_TEMPLATE_NAME --machine-type=n1-standard-4 --network-tier=PREMIUM --maintenance-policy=MIGRATE --tags=cdn-proxy,http-server,https-server --image=$IMAGE_NAME --image-project=$PROJECT_ID --boot-disk-size=30GB --boot-disk-type=pd-standard --boot-disk-device-name=$INSTANCE_TEMPLATE_NAME --reservation-affinity=any --metadata=startup-script="#! /bin/bash
 export ORIGIN_URL=${ORIGIN_URL}
 export CDN_CACHE_EXPIRE=${CDN_CACHE_EXPIRE}
 export API_GATEWAY_URL=${API_GATEWAY_URL}
@@ -51,19 +51,19 @@ gcloud compute health-checks create http $HEALTHCHECK_NAME --project=$PROJECT_ID
 
 gcloud beta compute --project=$PROJECT_ID instance-groups managed create $INSTANCE_GROUP_NAME --base-instance-name=$INSTANCE_GROUP_NAME --template=$INSTANCE_TEMPLATE_NAME --size=1 --zones=$INSTANCE_GROUP_ZONES --instance-redistribution-type=PROACTIVE --health-check=$HEALTHCHECK_NAME --initial-delay=60
 
-gcloud beta compute --project "$PROJECT_ID" instance-groups managed set-autoscaling "$INSTANCE_GROUP_NAME" --region "$REGION" --cool-down-period "60" --max-num-replicas "10" --min-num-replicas "1" --target-cpu-utilization "0.6" --mode "on"
+gcloud beta compute --project "$PROJECT_ID" instance-groups managed set-autoscaling "$INSTANCE_GROUP_NAME" --region "$REGION" --cool-down-period "60" --max-num-replicas "10" --min-num-replicas "2" --target-cpu-utilization "0.6" --mode "on"
 
 
 # 5. Create LB
 
-gcloud compute backend-services create $BACKEND_NAME \
+gcloud compute --project=$PROJECT_ID backend-services create $BACKEND_NAME \
 --protocol HTTP \
 --health-checks $HEALTHCHECK_NAME \
 --global \
 --enable-cdn \
 --timeout=60
 
-gcloud compute backend-services add-backend $BACKEND_NAME \
+gcloud compute --project=$PROJECT_ID backend-services add-backend $BACKEND_NAME \
 --balancing-mode=UTILIZATION \
 --max-utilization=0.8 \
 --capacity-scaler=1 \
@@ -71,13 +71,13 @@ gcloud compute backend-services add-backend $BACKEND_NAME \
 --instance-group-region=$REGION \
 --global
 
-gcloud compute url-maps create $URLMAP_NAME \
+gcloud compute --project=$PROJECT_ID url-maps create $URLMAP_NAME \
 --default-service $BACKEND_NAME
 
-gcloud compute target-http-proxies create $TARGET_PROXY_NAME \
+gcloud compute --project=$PROJECT_ID target-http-proxies create $TARGET_PROXY_NAME \
 --url-map $URLMAP_NAME 
 
-gcloud compute forwarding-rules create $FORWARD_RULE_NAME \
+gcloud compute --project=$PROJECT_ID forwarding-rules create $FORWARD_RULE_NAME \
 --global \
 --target-http-proxy=$TARGET_PROXY_NAME \
 --ports=80

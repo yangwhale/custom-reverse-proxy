@@ -5,9 +5,6 @@
 export NGINX_TEMPLATE=https://raw.githubusercontent.com/yangwhale/custom-reverse-proxy/master/openresty/nginx/conf/nginx_basic_proxy.conf
 export CDN_CACHE_EXPIRE=2592000
 export ORIGIN_URL=http://d2f89xs4on71s8.cloudfront.net
-export API_GATEWAY_URL=http://huya-live.mocklab.io/cdngw/backstreamurl
-export REDIS_IP=10.150.216.116
-export REDIRECT_CACHE_EXPIRE=60
 
 # gcloud command settings
 # Update to your own choice of naming and region
@@ -37,12 +34,9 @@ gcloud compute images create $IMAGE_NAME --project=$PROJECT_ID --source-disk=$BA
 gcloud beta compute --project=$PROJECT_ID instance-templates create $INSTANCE_TEMPLATE_NAME --machine-type=n1-standard-4 --network-tier=PREMIUM --maintenance-policy=MIGRATE --tags=cdn-proxy,http-server,https-server --image=$IMAGE_NAME --image-project=$PROJECT_ID --boot-disk-size=30GB --boot-disk-type=pd-standard --boot-disk-device-name=$INSTANCE_TEMPLATE_NAME --reservation-affinity=any --metadata=startup-script="#! /bin/bash
 export ORIGIN_URL=${ORIGIN_URL}
 export CDN_CACHE_EXPIRE=${CDN_CACHE_EXPIRE}
-export API_GATEWAY_URL=${API_GATEWAY_URL}
-export REDIS_IP=${REDIS_IP}
-export REDIRECT_CACHE_EXPIRE=${REDIRECT_CACHE_EXPIRE}
 wget $NGINX_TEMPLATE --output-document=nginx.conf
 cp /usr/local/openresty/nginx/conf/nginx.conf /usr/local/openresty/nginx/conf/nginx_def.conf
-envsubst '\${ORIGIN_URL} \${CDN_CACHE_EXPIRE} \${API_GATEWAY_URL} \${REDIS_IP} \${REDIRECT_CACHE_EXPIRE}' < ./nginx.conf > /usr/local/openresty/nginx/conf/nginx.conf
+envsubst '\${ORIGIN_URL} \${CDN_CACHE_EXPIRE}' < ./nginx.conf > /usr/local/openresty/nginx/conf/nginx.conf
 systemctl restart openresty"
 
 # 4. Create Instance Group

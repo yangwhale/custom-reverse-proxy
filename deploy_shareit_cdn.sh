@@ -23,7 +23,7 @@ export ZONE=asia-southeast1-a
 export INSTANCE_GROUP_ZONES=asia-southeast1-a,asia-southeast1-b,asia-southeast1-c
 
 # 1. Create base VM, with openresty installed
-gcloud beta compute --project=$PROJECT_ID instances create $BASE_INSTANCE_NAME --zone=$ZONE --machine-type=n1-standard-1 --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --tags=cdn-proxy,http-server,https-server --image=ubuntu-1804-bionic-v20200129a --image-project=ubuntu-os-cloud --boot-disk-size=10GB --boot-disk-type=pd-standard --boot-disk-device-name=$BASE_INSTANCE_NAME --reservation-affinity=any --metadata=startup-script=wget\ -O\ -\ https://raw.githubusercontent.com/yangwhale/custom-reverse-proxy/master/openresty/gce_startup.sh\ \|\ bash
+gcloud beta compute --project=$PROJECT_ID instances create $BASE_INSTANCE_NAME --zone=$ZONE --machine-type=n1-standard-1 --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --tags=cdn-proxy,http-server,https-server --image=ubuntu-1804-bionic-v20200129a --image-project=ubuntu-os-cloud --boot-disk-size=10GB --boot-disk-type=pd-standard --boot-disk-device-name=$BASE_INSTANCE_NAME --reservation-affinity=any --service-account=compute@chris-test-demo.iam.gserviceaccount.com --metadata=startup-script=wget\ -O\ -\ https://raw.githubusercontent.com/yangwhale/custom-reverse-proxy/master/openresty/gce_startup.sh\ \|\ bash
 sleep 60
 	
 # 2. Create custom Image
@@ -31,7 +31,7 @@ gcloud compute images create $IMAGE_NAME --project=$PROJECT_ID --source-disk=$BA
 	
 # 3. Create instance template
 
-gcloud beta compute --project=$PROJECT_ID instance-templates create $INSTANCE_TEMPLATE_NAME --machine-type=n1-standard-4 --network-tier=PREMIUM --maintenance-policy=MIGRATE --tags=cdn-proxy,http-server,https-server --image=$IMAGE_NAME --image-project=$PROJECT_ID --boot-disk-size=30GB --boot-disk-type=pd-standard --boot-disk-device-name=$INSTANCE_TEMPLATE_NAME --reservation-affinity=any --metadata=startup-script="#! /bin/bash
+gcloud beta compute --project=$PROJECT_ID instance-templates create $INSTANCE_TEMPLATE_NAME --machine-type=n1-standard-4 --network-tier=PREMIUM --maintenance-policy=MIGRATE --tags=cdn-proxy,http-server,https-server --image=$IMAGE_NAME --image-project=$PROJECT_ID --boot-disk-size=30GB --boot-disk-type=pd-standard --boot-disk-device-name=$INSTANCE_TEMPLATE_NAME --reservation-affinity=any --service-account=compute@chris-test-demo.iam.gserviceaccount.com --metadata=startup-script="#! /bin/bash
 export ORIGIN_URL=${ORIGIN_URL}
 export CDN_CACHE_EXPIRE=${CDN_CACHE_EXPIRE}
 wget $NGINX_TEMPLATE --output-document=nginx.conf
